@@ -12,6 +12,8 @@ D_PUPIL = 50;
 DO_SIDE_RING = 42;
 DI_SIDE_RING = 38;
 D_SIDE_RING_SPHERE = 85;
+DEPTH_SIDE_RING = 3;
+X_SIDE_RING = pyth(c=D_CORE/2, a=DO_SIDE_RING/2) - DEPTH_SIDE_RING;
 
 DO_FRONT_RING = 53;
 DI_FRONT_RING = D_PUPIL;
@@ -66,6 +68,16 @@ module front_ring_cavity() {
   translate([0,0,Z_FRONT_RING_TOP-H_FRONT_RING])cylinder(d=DO_FRONT_RING, h=H_FRONT_RING);
 }
 
+module side_rings_cavity() {
+  rotate([0,90,0])
+    difference()
+  {
+    cylinder(d=DO_SIDE_RING, h=D_SIDE_RING_SPHERE, center=true);
+    cylinder(d=DI_SIDE_RING, h=D_MAX, center=true);
+    cylinder(d=D_MAX, h=2* X_SIDE_RING,center=true);
+  }
+}
+
 module center_ring_cavity() {
   rotate([0,90,0])
   cylinder(h=W_CENTER_RING,d=D_CORE+1, center=true);
@@ -92,6 +104,7 @@ module body_outer(){
     }
     lamp_cavity();
     front_ring_cavity();
+    side_rings_cavity();
   }
 }
 
@@ -133,7 +146,6 @@ module top_bottom_strip() {
 
 
 module side_rings() {
-  w_rings = pyth(c=D_CORE, a=DO_SIDE_RING);
   color(C_RINGS)
   rotate([0,90,0])
   difference(){
@@ -143,7 +155,7 @@ module side_rings() {
       cube(D_SIDE_RING_SPHERE+1,center=true);
       sphere(d=D_SIDE_RING_SPHERE);
     }
-    cube([D_SIDE_RING_SPHERE,D_SIDE_RING_SPHERE,w_rings-4],center=true);
+    cube([D_SIDE_RING_SPHERE,D_SIDE_RING_SPHERE,X_SIDE_RING*2],center=true);
   }
 }
 
