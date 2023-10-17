@@ -1,5 +1,7 @@
 function pyth(a=0,b=0,c=0) = sqrt(c == 0 ? (a*a + b*b) : (c*c - a*a - b*b));
 
+D_MAX = 100;
+
 D_CORE = 84;
 
 D_CORE_INNER = 81.5;
@@ -18,7 +20,7 @@ H_FRONT_RING_GAP = 8;
 Z_FRONT_RING_TOP = pyth(c=D_CORE/2, a=DI_FRONT_RING/2);
 
 D_LEDGE = 48;
-Z_LEDGE = Z_FRONT_RING_TOP - 2;
+Z_LEDGE = Z_FRONT_RING_TOP - 5;
 
 W_RING_GAP = 2.5;
 
@@ -32,13 +34,29 @@ A_BROW = 30;
 L_BROW_ANCHOR = 18;
 D_BROW_ANCHOR = 7.5;
 
-W_CENTER_STRIP = 2.6;
-D_CENTER_STRIP = 77;
+W_CENTER_RING = 2.6;
+D_CENTER_RING = 77;
+
+W_TOP_BOTTOM_STRIP = 10;
+Z_TOP_BOTTOM_STRIP_TOP = 26;
+Z_TOP_BOTTOM_STRIP_BOTTOM = -17;
+DEPTH_TOP_BOTTOM_STRIP = 15;
+DO_TOP_BOTTOM_STRIP = D_CORE_INNER-2;
+DI_TOP_BOTTOM_STRIP = D_CENTER_RING + 1;
 
 C_MAIN = "#cccccc";
 C_RINGS = "#888888";
 C_BROWS = "#222222";
 
+module intersection() {
+  difference(){
+    children(0);
+    difference(){
+      cube(D_MAX, center=true);
+      children(1);
+    }
+  }
+}
 
 module lamp_cavity() {
   cylinder(d=D_PUPIL, h=D_CORE);
@@ -48,9 +66,18 @@ module front_ring_cavity() {
   translate([0,0,Z_FRONT_RING_TOP-H_FRONT_RING])cylinder(d=DO_FRONT_RING, h=H_FRONT_RING);
 }
 
-module center_strip_cavity() {
+module center_ring_cavity() {
   rotate([0,90,0])
-  cylinder(h=W_CENTER_STRIP,d=D_CORE+1, center=true);
+  cylinder(h=W_CENTER_RING,d=D_CORE+1, center=true);
+}
+
+module top_bottom_strip_cavity() {
+  h_strip = Z_TOP_BOTTOM_STRIP_TOP - Z_TOP_BOTTOM_STRIP_BOTTOM;
+  for(sy = [-1,1]){
+    scale([1,sy,1])
+      translate([-W_TOP_BOTTOM_STRIP/2 ,D_CORE/2-DEPTH_TOP_BOTTOM_STRIP,Z_TOP_BOTTOM_STRIP_BOTTOM])
+      cube([W_TOP_BOTTOM_STRIP, DEPTH_TOP_BOTTOM_STRIP, h_strip]);
+  }
 }
 
 module body_outer(){
@@ -76,19 +103,34 @@ module body_inner() {
     translate([-D_CORE/2-W_CORE_INNER/2,0,0])cube(D_CORE,center=true);
     lamp_cavity();
     front_ring_cavity();
-    center_strip_cavity();
+    center_ring_cavity();
+    top_bottom_strip_cavity();
   }
 }
 
-module center_strip() {
+module center_ring() {
   color(C_BROWS)
     difference()
   {
-    rotate([0,90,0]) cylinder(d=D_CENTER_STRIP, h=W_CENTER_STRIP, center=true);
+    rotate([0,90,0]) cylinder(d=D_CENTER_RING, h=W_CENTER_RING, center=true);
     lamp_cavity();
     front_ring_cavity();
   }
 }
+
+module top_bottom_strip() {
+  color(C_RINGS)
+    intersection()
+  {
+    for(ry = [90,-90]){
+      rotate([0,ry,0])
+        translate([0,0,W_CENTER_RING/2])
+        cylinder(r1=DI_TOP_BOTTOM_STRIP/2, r2=DO_TOP_BOTTOM_STRIP/2, h=(W_TOP_BOTTOM_STRIP-W_CENTER_RING)/2);
+    }
+    top_bottom_strip_cavity();
+  }
+}
+
 
 module side_rings() {
   w_rings = pyth(c=D_CORE, a=DO_SIDE_RING);
@@ -166,10 +208,11 @@ scale([1,-1,1])eyebrow();
 
 $fn=120;
 
-center_strip();
+center_ring();
 body_outer();
 body_inner();
 
 side_rings();
 front_ring();
+top_bottom_strip();
 
