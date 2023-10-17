@@ -45,6 +45,7 @@ Z_TOP_BOTTOM_STRIP_BOTTOM = -17;
 DEPTH_TOP_BOTTOM_STRIP = 15;
 DO_TOP_BOTTOM_STRIP = D_CORE_INNER-2;
 DI_TOP_BOTTOM_STRIP = D_CENTER_RING + 1;
+Y_TOP_BOTTOM_STRIP = DO_FRONT_RING/2;
 
 C_MAIN = "#cccccc";
 C_RINGS = "#888888";
@@ -87,9 +88,13 @@ module top_bottom_strip_cavity() {
   h_strip = Z_TOP_BOTTOM_STRIP_TOP - Z_TOP_BOTTOM_STRIP_BOTTOM;
   for(sy = [-1,1]){
     scale([1,sy,1])
-      translate([-W_TOP_BOTTOM_STRIP/2 ,D_CORE/2-DEPTH_TOP_BOTTOM_STRIP,Z_TOP_BOTTOM_STRIP_BOTTOM])
-      cube([W_TOP_BOTTOM_STRIP, DEPTH_TOP_BOTTOM_STRIP, h_strip]);
+      translate([-W_TOP_BOTTOM_STRIP/2, Y_TOP_BOTTOM_STRIP, Z_TOP_BOTTOM_STRIP_BOTTOM])
+      cube([W_TOP_BOTTOM_STRIP, D_MAX, h_strip]);
   }
+}
+
+module top_bottom_strip_center_ring_cavity() {
+  translate([-W_TOP_BOTTOM_STRIP/2,-Y_TOP_BOTTOM_STRIP-3,0]) cube([W_TOP_BOTTOM_STRIP, 2*(Y_TOP_BOTTOM_STRIP+3),10]);
 }
 
 module body_outer(){
@@ -128,19 +133,25 @@ module center_ring() {
     rotate([0,90,0]) cylinder(d=D_CENTER_RING, h=W_CENTER_RING, center=true);
     lamp_cavity();
     front_ring_cavity();
+    top_bottom_strip_center_ring_cavity();
   }
 }
 
 module top_bottom_strip() {
   color(C_RINGS)
-    intersection()
+    difference()
   {
-    for(ry = [90,-90]){
-      rotate([0,ry,0])
-        translate([0,0,W_CENTER_RING/2])
-        cylinder(r1=DI_TOP_BOTTOM_STRIP/2, r2=DO_TOP_BOTTOM_STRIP/2, h=(W_TOP_BOTTOM_STRIP-W_CENTER_RING)/2);
+    intersection() {
+      union(){
+        for(ry = [90,-90]){
+          rotate([0,ry,0])
+            translate([0,0,W_CENTER_RING/2])
+            cylinder(r1=DI_TOP_BOTTOM_STRIP/2, r2=DO_TOP_BOTTOM_STRIP/2, h=(W_TOP_BOTTOM_STRIP-W_CENTER_RING)/2);
+        }
+        top_bottom_strip_center_ring_cavity();
+      }
+      top_bottom_strip_cavity();
     }
-    top_bottom_strip_cavity();
   }
 }
 
@@ -214,11 +225,11 @@ module eyebrow() {
     }
   }
 }
-
-eyebrow();
-scale([1,-1,1])eyebrow();
-
 $fn=120;
+
+*eyebrow();
+*scale([1,-1,1])eyebrow();
+
 
 center_ring();
 body_outer();
