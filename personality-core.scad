@@ -19,10 +19,11 @@ DO_FRONT_RING = 53;
 DI_FRONT_RING = D_PUPIL;
 H_FRONT_RING = 12;
 H_FRONT_RING_GAP = 8;
-Z_FRONT_RING_TOP = pyth(c=D_CORE/2, a=DI_FRONT_RING/2);
+Z_FRONT_RING_TOP = pyth(c=D_CORE/2, a=(DI_FRONT_RING+DO_FRONT_RING)/4);
 
 D_LEDGE = 48;
 Z_LEDGE = Z_FRONT_RING_TOP - 5;
+Z_LAMP_BOTTOM = Z_LEDGE - 55;
 
 W_RING_GAP = 2.5;
 
@@ -66,7 +67,7 @@ module lamp_cavity() {
 }
 
 module front_ring_cavity() {
-  translate([0,0,Z_FRONT_RING_TOP-H_FRONT_RING])cylinder(d=DO_FRONT_RING, h=H_FRONT_RING);
+  translate([0,0,Z_FRONT_RING_TOP-H_FRONT_RING])cylinder(d=DO_FRONT_RING, h=H_FRONT_RING+10);
 }
 
 module side_rings_cavity() {
@@ -97,32 +98,29 @@ module top_bottom_strip_center_ring_cavity() {
   translate([-W_TOP_BOTTOM_STRIP/2,-Y_TOP_BOTTOM_STRIP-3,0]) cube([W_TOP_BOTTOM_STRIP, 2*(Y_TOP_BOTTOM_STRIP+3),10]);
 }
 
-module body_outer(){
+module body() {
   r_chamfer_inner = pyth(c=D_CORE_INNER/2, a=W_CORE_INNER/2);
   color(C_MAIN)
-  difference(){
-    sphere(d=D_CORE);
-    rotate([0,90,0]) difference(){
-      cylinder(d=D_CORE+1, h=W_CORE_INNER+8, center=true);
-      translate([0,0,W_CORE_INNER/2])cylinder(r1=r_chamfer_inner, r2=r_chamfer_inner+5, h=8);
-      translate([0,0,-W_CORE_INNER/2-8])cylinder(r1=r_chamfer_inner+5, r2=r_chamfer_inner, h=8);
+    difference()
+  {
+    union(){
+      sphere(d=D_CORE_INNER);
+      intersection(){
+        sphere(d=D_CORE);
+        rotate([0,90,0]) {
+          for(sz = [-1,1]) scale([1,1,sz]){
+            translate([0,0,W_CORE_INNER/2])cylinder(r1=r_chamfer_inner, r2=r_chamfer_inner+5, h=8);
+            translate([0,0,W_CORE_INNER/2+7])cylinder(d=D_CORE,h=D_CORE/2);
+          }
+        }
+      }
     }
-    lamp_cavity();
-    front_ring_cavity();
-    side_rings_cavity();
-  }
-}
 
-module body_inner() {
-  color(C_MAIN)
-  difference(){
-    sphere(d=D_CORE_INNER);
-    translate([D_CORE/2+W_CORE_INNER/2,0,0])cube(D_CORE,center=true);
-    translate([-D_CORE/2-W_CORE_INNER/2,0,0])cube(D_CORE,center=true);
     lamp_cavity();
     front_ring_cavity();
     center_ring_cavity();
     top_bottom_strip_cavity();
+    side_rings_cavity();
   }
 }
 
@@ -231,11 +229,10 @@ $fn=120;
 *scale([1,-1,1])eyebrow();
 
 
-center_ring();
-body_outer();
-body_inner();
+*center_ring();
+body();
 
-side_rings();
+*side_rings();
 front_ring();
-top_bottom_strip();
+*top_bottom_strip();
 
