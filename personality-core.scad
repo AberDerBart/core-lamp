@@ -21,9 +21,8 @@ H_FRONT_RING = 12;
 H_FRONT_RING_GAP = 8;
 Z_FRONT_RING_TOP = pyth(c=D_CORE/2, a=(DI_FRONT_RING+DO_FRONT_RING)/4);
 
-D_LEDGE = 48;
-Z_LEDGE = Z_FRONT_RING_TOP - 5;
-Z_LAMP_BOTTOM = Z_LEDGE - 55;
+Z_LAMP_TOP = Z_FRONT_RING_TOP - 3;
+Z_LAMP_BOTTOM = Z_LAMP_TOP - 55;
 
 W_RING_GAP = 2.5;
 
@@ -52,6 +51,7 @@ C_MAIN = "#cccccc";
 C_RINGS = "#888888";
 C_BROWS = "#222222";
 
+
 module intersection() {
   difference(){
     children(0);
@@ -63,7 +63,10 @@ module intersection() {
 }
 
 module lamp_cavity() {
-  cylinder(d=D_PUPIL, h=D_CORE);
+  hull(){
+    translate([0,0,Z_LAMP_BOTTOM])cylinder(d=D_PUPIL/2, h=1);
+    translate([0,0,Z_LAMP_BOTTOM+D_PUPIL/4])cylinder(d=D_PUPIL,h=D_CORE);
+  }
 }
 
 module front_ring_cavity() {
@@ -82,7 +85,7 @@ module side_rings_cavity() {
 
 module center_ring_cavity() {
   rotate([0,90,0])
-  cylinder(h=W_CENTER_RING,d=D_CORE+1, center=true);
+    cylinder(h=W_CENTER_RING,d=D_CORE+1, center=true);
 }
 
 module top_bottom_strip_cavity() {
@@ -172,9 +175,6 @@ module front_ring() {
   d_center = (DO_FRONT_RING + DI_FRONT_RING) / 2;
   w_ring = (DO_FRONT_RING - DI_FRONT_RING) / 2;
 
-  w_socket = (d_center - D_LEDGE)/2;
-  h_socket = Z_LEDGE - Z_FRONT_RING_TOP + H_FRONT_RING;
-
   color(C_RINGS) 
     translate([0,0,Z_FRONT_RING_TOP])
     difference()
@@ -184,7 +184,6 @@ module front_ring() {
         circle(d=w_ring); 
         translate([0,-H_FRONT_RING/2])square([w_ring, H_FRONT_RING], center=true);
       }
-      translate([D_LEDGE/2,-H_FRONT_RING]) square([w_socket, h_socket]);
     }
     cube([D_CORE, W_RING_GAP, 2 * H_FRONT_RING_GAP], center=true);
     cube([W_RING_GAP, D_CORE, 2 * H_FRONT_RING_GAP], center=true);
@@ -223,16 +222,19 @@ module eyebrow() {
     }
   }
 }
-$fn=120;
+$fn=30;
 
 *eyebrow();
 *scale([1,-1,1])eyebrow();
 
 
-*center_ring();
-body();
+center_ring();
+difference(){
+  body();
+  translate([-D_MAX/2,0,0])cube(D_MAX, center=true);
+}
 
-*side_rings();
+side_rings();
 front_ring();
-*top_bottom_strip();
+top_bottom_strip();
 
